@@ -1,7 +1,6 @@
 import type { IPty } from "@lydell/node-pty";
 import type { ProcessCapture } from "../../domain/process/processCaptureParsing.js";
 import type { ProcessScenario } from "../../domain/process/processScenario.js";
-import { parseProcessCapture } from "../../domain/process/processCaptureParsing.js";
 import { err, ok, type Result } from "../../domain/result.js";
 import { AnalysisCapabilityUnavailableError } from "../../domain/analysisErrorCore.js";
 import { AnalysisError } from "../../domain/analysisErrorBase.js";
@@ -495,30 +494,6 @@ const finishProcessRun = async (options: {
     disposition: captureProgressDisposition(observedExit, executionFailure),
     cleanup,
   });
-  const cleanupFailure = cleanupReportFailure(cleanup);
-  let verifiedCapture: ProcessCapture | undefined;
-  if (capture !== undefined && cleanupFailure === undefined) {
-    const settlement: UnverifiedProcessCapture["settlement"] =
-      capture.settlement.state === "quiesced"
-        ? { ...capture.settlement, cleanup_outcome: "not_required" }
-        : { ...capture.settlement, cleanup_outcome: "cleaned" };
-    const completedCapture: UnverifiedProcessCapture = {
-      ...capture,
-      settlement,
-      cleanup: {
-        owned_process_group: "verified",
-        temporary_root: "removed",
-      },
-    };
-    try {
-      verifiedCapture = parseProcessCapture(completedCapture);
-    } catch (cause: unknown) {
-      executionFailure = new ProcessCaptureError(
-        `process capture validation failed${cause instanceof Error ? `: ${cause.message}` : ""}`,
-        { cause },
-      );
-    }
-  }
   const rootPid = options.runtime?.terminal.pid ?? options.rootPid;
   const partialContext =
     rootPid === undefined
@@ -529,7 +504,7 @@ const finishProcessRun = async (options: {
   if (executionFailure === undefined && options.signal?.aborted)
     executionFailure = processCaptureCancelled(options.signal.reason);
   return resolveProcessResult(
-    cleanupFailure === undefined ? verifiedCapture : capture,
+    capture,
     executionFailure,
     cleanupOutcome,
     options.observations,

@@ -312,10 +312,20 @@ itWithCaptureCapability(
       );
       if (cleanupIncomplete)
         expect(capture.settlement.cleanup_outcome).toBe("failed");
-      else
+      else {
+        expect(capture.settlement.cleanup_outcome).toBe("cleaned");
+        expect(capture.residual_unknowns).toContainEqual(
+          expect.objectContaining({
+            scope: "process",
+            reason: expect.stringContaining(
+              "run-token-owned process was signaled during final cleanup",
+            ),
+          }),
+        );
         expect(result.ok && result.value.cleanup.owned_process_group).toBe(
           "verified",
         );
+      }
       await waitForProcessExit(ownedPid);
       const unownedState = await processState(unownedPid);
       expect(unownedState).toBeDefined();

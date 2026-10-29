@@ -173,6 +173,7 @@ it("retains completed terminal facts and the typed capacity failure through fina
           temporary_root: cleanup,
         },
         cleanupLease: undefined,
+        ownedProcessGroupSignaled: false,
       },
       observations,
       { scenario, rootPid: 100 },

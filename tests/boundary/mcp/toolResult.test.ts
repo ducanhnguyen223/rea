@@ -39,7 +39,11 @@ const emptyFilesystemCoverage =
   emptyProcessCapture().truncation_details.filesystem_before;
 const historicalCleanupOutcome = (
   report: ProcessCaptureCleanupReport,
-): ProcessCaptureCleanupOutcome => ({ report, cleanupLease: undefined });
+): ProcessCaptureCleanupOutcome => ({
+  report,
+  cleanupLease: undefined,
+  ownedProcessGroupSignaled: false,
+});
 
 const captureWithObservedOutput = () =>
   accountFullyObservedProcessCapture({

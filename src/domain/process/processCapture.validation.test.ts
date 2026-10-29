@@ -410,9 +410,9 @@ it("does not infer normalized retention budget from missing scenario defaults", 
   ).toContain("manifest.scenario.limits.output_bytes");
 });
 
-it("rejects settlement and cleanup combinations that cannot occur", () => {
+it("accepts cleanup after quiescence and rejects impossible settlement outcomes", () => {
   const capture = emptyCapture();
-  expect(() =>
+  expect(
     parseProcessCapture({
       ...capture,
       settlement: {
@@ -420,8 +420,12 @@ it("rejects settlement and cleanup combinations that cannot occur", () => {
         elapsed_ms: 0,
         cleanup_outcome: "cleaned",
       },
-    }),
-  ).toThrow("cleanup_outcome");
+    }).settlement,
+  ).toEqual({
+    state: "quiesced",
+    elapsed_ms: 0,
+    cleanup_outcome: "cleaned",
+  });
   expect(() =>
     parseProcessCapture({
       ...capture,

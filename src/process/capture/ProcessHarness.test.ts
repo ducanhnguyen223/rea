@@ -44,7 +44,11 @@ const incompleteFilesystemCoverage = {
 } satisfies typeof emptyFilesystemCoverage;
 const historicalCleanupOutcome = (
   report: ProcessCaptureCleanupReport,
-): ProcessCaptureCleanupOutcome => ({ report, cleanupLease: undefined });
+): ProcessCaptureCleanupOutcome => ({
+  report,
+  cleanupLease: undefined,
+  ownedProcessGroupSignaled: false,
+});
 
 it("retains cancellation and cleanup facts when ownership baseline inspection aborts", async () => {
   const controller = new AbortController();
@@ -473,6 +477,11 @@ it("retains unrelated withheld processes through cleanup, capture, and JSON", as
       ...original.residual_unknowns,
       {
         scope: "process",
+        reason:
+          "A run-token-owned process was signaled during final cleanup; its later effects may be incomplete.",
+      },
+      {
+        scope: "process",
         reason: expect.stringContaining("900 could not be verified"),
       },
       {
@@ -481,6 +490,40 @@ it("retains unrelated withheld processes through cleanup, capture, and JSON", as
       },
     ]);
   }
+});
+
+it("records owned-process signals after settlement without hiding later effects", async () => {
+  const outcome = await releaseProcessResources({
+    timers: new Set(),
+    terminal: { pid: 321 },
+    renderer: undefined,
+    runId: "fixture-run",
+    temporaryRoot: "/fixture/root",
+    host: {
+      platform: "linux",
+      cleanupProcessGroup: async () => ({ cleaned: true, signaled: true }),
+      removeTemporaryRoot: async () => undefined,
+    },
+  });
+  expect(outcome.ownedProcessGroupSignaled).toBe(true);
+
+  const { cleanup: _cleanup, ...base } = emptyProcessCapture();
+  void _cleanup;
+  const pending = {
+    ...base,
+    settlement: { state: "quiesced" as const, elapsed_ms: 0 },
+  };
+  const resolved = resolveProcessResult(pending, undefined, outcome);
+  expect(resolved.settlement).toEqual({
+    state: "quiesced",
+    elapsed_ms: 0,
+    cleanup_outcome: "cleaned",
+  });
+  expect(resolved.residual_unknowns).toContainEqual({
+    scope: "process",
+    reason:
+      "A run-token-owned process was signaled during final cleanup; its later effects may be incomplete.",
+  });
 });
 
 it("passes sampled detached groups into cleanup even when their token is unknown", async () => {
