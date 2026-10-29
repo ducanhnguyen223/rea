@@ -156,6 +156,7 @@ export type HopperApplicationLauncherOptions =
   | (SharedHopperApplicationLauncherOptions & {
       readonly launchMode: "verified_linux_demo";
       readonly demoHelperPath: string;
+      readonly startupTimeoutMs?: number;
     });
 
 export interface HopperApplicationLauncherDependencies {
@@ -753,6 +754,9 @@ export const linuxDemoLaunch = (
     options.launcherPath,
     "--expected-launcher-sha256",
     expectedSha256,
+    ...(options.startupTimeoutMs === undefined
+      ? []
+      : ["--startup-timeout-ms", String(options.startupTimeoutMs)]),
     "--socket",
     session.socketPath,
     "--",

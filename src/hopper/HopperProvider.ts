@@ -315,6 +315,7 @@ export class HopperProvider implements AnalysisProviderCandidate {
               demoHelperPath: fileURLToPath(
                 new URL("../../scripts/hopper-demo-x11.py", import.meta.url),
               ),
+              startupTimeoutMs: this.config.hopperStartupTimeoutMs,
             }
           : { launchMode: "native" as const }),
       }),

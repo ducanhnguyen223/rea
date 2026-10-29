@@ -389,3 +389,27 @@ describe("HopperClient startup failures", () => {
     });
   });
 });
+
+describe("HopperClient launch error projections", () => {
+  it("projects an unsupported demo dialog separately from publisher rejection", async () => {
+    const client = new HopperClient({
+      launcher: new ExitingLauncher(76),
+      startupTimeoutMs: 10_000,
+    });
+    clients.push(client);
+    const result = await client.start();
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+
+    const projected = projectAnalysisError(result.error);
+    expect(projected.details).toMatchObject({
+      stage: "launch",
+      failure_code: "unsupported_demo_dialog",
+      exit_code: 76,
+    });
+    expect(projected.details).not.toHaveProperty("launch_rejection");
+    expect(projected.message).toContain(
+      "This Hopper demo dialog is not supported",
+    );
+  });
+});

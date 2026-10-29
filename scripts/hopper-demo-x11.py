@@ -22,6 +22,9 @@ import time
 EXPECTED_SCREEN = (1280, 1024)
 DIALOG_TITLES = {"Registration", "Registration — Hopper Disassembler"}
 HOPPER_WINDOW_TITLE = "Hopper Disassembler"
+DEFAULT_STARTUP_TIMEOUT_MS = 10_000
+# Keep in sync with providerStartupTimeoutSchema's accepted timer ceiling.
+MAX_STARTUP_TIMEOUT_MS = 2_147_483_647
 DEMO_CLICK_LEFT = 116
 DEMO_CLICK_BOTTOM = 22
 PRIVATE_DISPLAY_UNAVAILABLE = 70
@@ -117,6 +120,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--owner-stdin", action="store_true")
     parser.add_argument("--hopper")
     parser.add_argument("--expected-launcher-sha256")
+    parser.add_argument(
+        "--startup-timeout-ms",
+        type=parse_startup_timeout_ms,
+        default=DEFAULT_STARTUP_TIMEOUT_MS,
+    )
     parser.add_argument("--socket")
     parser.add_argument(
         "--strategy",
@@ -129,6 +137,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--display-number", type=int)
     parser.add_argument("command", nargs=argparse.REMAINDER)
     return parser.parse_args()
+
+
+def parse_startup_timeout_ms(value: str) -> int:
+    if re.fullmatch(r"[1-9][0-9]*", value) is None:
+        raise argparse.ArgumentTypeError("must be a positive decimal integer")
+    timeout_ms = int(value)
+    if timeout_ms > MAX_STARTUP_TIMEOUT_MS:
+        raise argparse.ArgumentTypeError(
+            f"must not exceed {MAX_STARTUP_TIMEOUT_MS} milliseconds"
+        )
+    return timeout_ms
 
 
 class OwnerLifetime:
@@ -752,7 +771,7 @@ def run_launch(args: argparse.Namespace) -> int:
                 "unexpected private display geometry",
             )
 
-        deadline = time.monotonic() + 10
+        deadline = time.monotonic() + args.startup_timeout_ms / 1_000
         observed: list[tuple[int, int, int, int, int]] = []
         dialog: tuple[int, int, int, int, int] | None = None
         while time.monotonic() < deadline:

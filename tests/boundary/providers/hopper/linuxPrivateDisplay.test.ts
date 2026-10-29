@@ -98,6 +98,24 @@ const failureExit = (code: HopperStartupFailureCode): number =>
       : 70;
 
 describe("Hopper demo dialog detection", () => {
+  it.skipIf(process.platform === "win32").each([
+    ["30000", 0, ""],
+    ["0", 2, "must be a positive decimal integer"],
+    ["-1", 2, "must be a positive decimal integer"],
+    ["2147483648", 2, "must not exceed 2147483647 milliseconds"],
+  ])(
+    "validates startup timeout %s without opening a display",
+    (timeout, expectedExitCode, errorMessage) => {
+      const result = spawnSync(
+        "/usr/bin/python3",
+        [helperPath, "--startup-timeout-ms", timeout, "--help"],
+        { encoding: "utf8" },
+      );
+      expect(result.status).toBe(expectedExitCode);
+      if (errorMessage.length > 0) expect(result.stderr).toContain(errorMessage);
+    },
+  );
+
   it.skipIf(process.platform !== "linux")(
     "uses the Hopper transient-parent relation instead of exact dialog geometry",
     () => {

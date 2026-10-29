@@ -839,7 +839,9 @@ rea doctor --provider hopper --json
 ```
 
 Hopper startup allows 120,000 ms for launch, initial analysis, and authenticated
-bridge readiness. For large targets, set `REA_HOPPER_STARTUP_TIMEOUT_MS` to a
+bridge readiness. On Linux, this timeout also controls the helper's wait for the
+demo dialog or bridge socket. For large targets or slow Linux startup, set
+`REA_HOPPER_STARTUP_TIMEOUT_MS` to a
 decimal integer from 1 to 2,147,483,647 milliseconds in the environment that
 starts REA. CLI and MCP use the same setting; invalid values fail configuration
 validation. In MCP, `update_analysis_settings` can set

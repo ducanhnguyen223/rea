@@ -394,8 +394,12 @@ describe("Hopper bridge launcher selection", () => {
   });
 
   it("builds the namespace launch without sudo or a shell command", () => {
+    const launchOptions = {
+      ...options("/opt/hopper/bin/Hopper"),
+      startupTimeoutMs: 30_000,
+    };
     const launch = linuxDemoLaunch(
-      options("/opt/hopper/bin/Hopper"),
+      launchOptions,
       {
         directory: "/tmp/rea-fixture",
         socketPath: "/tmp/rea-fixture/bridge.sock",
@@ -426,6 +430,8 @@ describe("Hopper bridge launcher selection", () => {
         "/opt/hopper/bin/Hopper",
         "--expected-launcher-sha256",
         verifiedSha256,
+        "--startup-timeout-ms",
+        "30000",
         "--socket",
         "/tmp/rea-fixture/bridge.sock",
         "--",
@@ -438,9 +444,13 @@ describe("Hopper bridge launcher selection", () => {
   });
 
   it("keeps an ordinary Linux launch on the direct Python adapter", () => {
+    const launchOptions = {
+      ...options("/opt/hopper/bin/Hopper"),
+      startupTimeoutMs: 30_000,
+    };
     expect(
       linuxDemoLaunch(
-        options("/opt/hopper/bin/Hopper"),
+        launchOptions,
         {
           directory: "/tmp/rea-fixture",
           socketPath: "/tmp/rea-fixture/bridge.sock",
@@ -462,6 +472,8 @@ describe("Hopper bridge launcher selection", () => {
         "/opt/hopper/bin/Hopper",
         "--expected-launcher-sha256",
         verifiedSha256,
+        "--startup-timeout-ms",
+        "30000",
         "--socket",
         "/tmp/rea-fixture/bridge.sock",
         "--",
